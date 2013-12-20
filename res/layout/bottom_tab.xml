@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TabWidget xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bottom_tab"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="4dip"
+    android:paddingBottom="4dip"
+    android:background="@drawable/bottom_tab_bg">
+    <TextView 
+        android:id="@+id/tab1"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:drawableTop="@drawable/tab_ic_home_selected"
+        android:text="@string/main_page"/>
+    <TextView 
+        android:id="@+id/tab2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:drawableTop="@drawable/tab_ic_setting"
+        android:text="@string/action_settings"/>
+</TabWidget>
