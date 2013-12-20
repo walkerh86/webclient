@@ -9,6 +9,10 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.animation.RotateAnimation;
+import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -17,8 +21,11 @@ import android.widget.TextView;
 public class PullToRefreshView extends LinearLayout{
 	private static final String TAG = "PullToRefreshView";
 
+	private Context mContext;
 	private ListView mListView;
 	private View mHeaderView;
+	private ImageView mHeaderImgView;
+	private TextView mHeaderTextView;
 	private boolean mIsBeingDragged;
 	private int mTouchSlop;
 	private float mLastMotionX, mLastMotionY;
@@ -29,18 +36,25 @@ public class PullToRefreshView extends LinearLayout{
 	private static final int REFRESH_STATE_RELEASE_REFRESH = 1;
 	private static final int REFRESH_STATE_REFRESHING = 2;
 	
+	Animation mArrowUpAnimator; 
+	Animation mArrowDnAnimator; 
+	Animation mLoopRotateAnimator;
+	
 	private Handler mHandler = new Handler();
 	
 	public PullToRefreshView(Context context) {
 		super(context);
+		mContext = context;
 	}
 	
 	public PullToRefreshView(Context context, AttributeSet attrs) {
 		super(context,attrs);
 		
+		mContext = context;
 		mIsBeingDragged = false;
 		ViewConfiguration config = ViewConfiguration.get(context);
 		mTouchSlop = config.getScaledTouchSlop();
+		initAnimation();
 	}
 	
 	@Override
@@ -59,7 +73,9 @@ public class PullToRefreshView extends LinearLayout{
         
         int headerHeight = mHeaderHeight;
         if(mHeaderView == null){
-        	mHeaderView = this.findViewById(R.id.header_view);        	
+        	mHeaderView = this.findViewById(R.id.header_view);  
+        	mHeaderImgView = (ImageView)mHeaderView.findViewById(R.id.header_img);
+        	mHeaderTextView = (TextView)mHeaderView.findViewById(R.id.header_text);
         }
         measureChildWithMargins(mHeaderView,widthMeasureSpec,0,heightMeasureSpec,0);
         mHeaderHeight = mHeaderView.getMeasuredHeight();
@@ -75,11 +91,6 @@ public class PullToRefreshView extends LinearLayout{
         if(mHeaderHeight != headerHeight){
         	scrollTo(0,mHeaderHeight);
         }
-	}
-		
-	public void setViews(View header_view, ListView listview){
-		mHeaderView = header_view;
-		mListView = listview;
 	}
 	
 	@Override
@@ -186,6 +197,7 @@ public class PullToRefreshView extends LinearLayout{
 						mHandler.postDelayed(new Runnable(){
 							public void run(){
 								scrollTo(0,mHeaderHeight);
+								setRefreshState(REFRESH_STATE_PULL_REFRESH);
 							}
 						}, 2000);
 					}else{
@@ -205,8 +217,6 @@ public class PullToRefreshView extends LinearLayout{
 		if (mListView.getFirstVisiblePosition() <= 0) {
 			final View firstVisibleChild = mListView.getChildAt(0);
 			if (firstVisibleChild != null) {
-				Log.i(TAG,"isReadyForPull firstchild top="+firstVisibleChild.getTop());
-				Log.i(TAG,"isReadyForPull listview top="+mListView.getTop());
 				return firstVisibleChild.getTop() >= 0;
 			} 
 		}
@@ -215,18 +225,42 @@ public class PullToRefreshView extends LinearLayout{
 	
 	private void setRefreshState(int state){
 		if(mRefreshState != state){
+			int preState = mRefreshState;
 			mRefreshState = state;
-			TextView textV = (TextView)mHeaderView.findViewById(R.id.header_text);
-			ImageView imgV = (ImageView)mHeaderView.findViewById(R.id.header_img);
 			if(mRefreshState == REFRESH_STATE_PULL_REFRESH){
-				textV.setText(R.string.pull_down_to_refresh);
-				imgV.setImageResource(R.drawable.refresh_list_pull_down);
+				mHeaderTextView.setText(R.string.pull_down_to_refresh);
+				if(preState == REFRESH_STATE_RELEASE_REFRESH){
+					mHeaderImgView.clearAnimation();
+					mHeaderImgView.startAnimation(mArrowDnAnimator);
+				}else{
+					mHeaderImgView.setImageResource(R.drawable.refresh_list_pull_down);
+				}
 			}else if(mRefreshState == REFRESH_STATE_RELEASE_REFRESH){
-				textV.setText(R.string.release_to_refresh);
-				imgV.setImageResource(R.drawable.refresh_list_release_up);
+				mHeaderTextView.setText(R.string.release_to_refresh);
+				if(preState == REFRESH_STATE_PULL_REFRESH){
+					mHeaderImgView.clearAnimation();
+					mHeaderImgView.startAnimation(mArrowUpAnimator);
+				}else{
+					mHeaderImgView.setImageResource(R.drawable.refresh_list_release_up);
+				}
 			}else if(mRefreshState == REFRESH_STATE_REFRESHING){
-				textV.setText(R.string.refreshing);
+				mHeaderTextView.setText(R.string.refreshing);
+				mHeaderImgView.setImageResource(R.drawable.default_ptr_rotate);
+				mHeaderImgView.clearAnimation();
+				mHeaderImgView.startAnimation(mLoopRotateAnimator);
 			}
+		}
+	}	
+	
+	private void initAnimation(){
+		if(mArrowUpAnimator == null){
+			mArrowUpAnimator = AnimationUtils.loadAnimation(mContext, R.anim.arrow_up_anim);
+		}
+		if(mArrowDnAnimator == null){
+			mArrowDnAnimator = AnimationUtils.loadAnimation(mContext, R.anim.arrow_down_anim);
+		}
+		if(mLoopRotateAnimator == null){
+			mLoopRotateAnimator = AnimationUtils.loadAnimation(mContext, R.anim.loop_rotate_anim);
 		}
 	}
 }

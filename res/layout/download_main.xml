@@ -9,7 +9,7 @@
     <RelativeLayout
         android:id="@+id/header_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dip"
         android:padding="4dip">        
 		<TextView 
 		    android:id="@+id/header_text"
@@ -23,8 +23,8 @@
             android:id="@+id/header_img"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toLeftOf="@id/header_text"
-            android:layout_marginRight="38dip"
+            android:layout_marginLeft="40dip"
+            android:layout_centerVertical="true"
             android:src="@drawable/refresh_list_pull_down"/>
 	</RelativeLayout>
 	<ListView
