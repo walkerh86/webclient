@@ -18,6 +18,9 @@ import org.jsoup.select.Elements;
 import org.xml.sax.XMLReader;
 
 import com.hcj.webclient.R;
+import com.hcj.webclient.util.DownloadUtils;
+import com.hcj.webclient.util.FileUtils;
+import com.hcj.webclient.util.Html;
 
 import android.app.Activity;
 import android.content.Context;

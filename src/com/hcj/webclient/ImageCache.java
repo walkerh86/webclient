@@ -5,6 +5,10 @@ import java.util.HashSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.hcj.webclient.util.DownloadUtils;
+import com.hcj.webclient.util.FileUtils;
+import com.hcj.webclient.util.NetworkUtils;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;

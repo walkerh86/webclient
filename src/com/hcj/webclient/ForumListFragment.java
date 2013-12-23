@@ -8,19 +8,10 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import com.hcj.webclient.ArticleListFragment.ArticleData;
-
-//import com.hcj.webclient.ArticleListFragment.ArticleData;
-//import com.hcj.webclient.ArticleListFragment.Category;
-
-//import com.hcj.webclient.ArticleListFragment.Category;
-//import com.hcj.webclient.ArticleListFragment.ArticleData;
-//import com.hcj.webclient.ArticleListFragment.Category;
+import com.hcj.webclient.util.DownloadUtils;
+import com.hcj.webclient.util.FileUtils;
 
 import android.content.Context;
-import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -29,10 +20,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -42,7 +31,7 @@ public class ForumListFragment extends Fragment{
 	private ListView mListView;
 	private ArrayList<Category> mCategorys = new ArrayList<Category>(ConfigUtils.DEFAULT_CATEGORY_NUM);	
 	private ArrayList<Category> mCategorysAdd = new ArrayList<Category>(ConfigUtils.DEFAULT_CATEGORY_NUM);	
-	private MyAdapter mMyAdapter;
+	private CategoryAdapter mCategoryAdapter;
 	
 	private static final int HANDLER_MSG_LOAD_PAGE_DONE = 2;
 	private static final int HANDLER_MSG_UPDATE_LIST = 3;
@@ -60,7 +49,7 @@ public class ForumListFragment extends Fragment{
 						mCategorys.add(mCategorysAdd.get(i));
 					}
 					mCategorysAdd.clear();
-					mMyAdapter.notifyDataSetChanged();
+					mCategoryAdapter.notifyDataSetChanged();
 					
 					mListView.removeFooterView(mFooterView);
 					break;
@@ -99,8 +88,8 @@ public class ForumListFragment extends Fragment{
 			}
 		});
 
-		mMyAdapter = new MyAdapter(getActivity(), mCategorys);
-		mListView.setAdapter(mMyAdapter);
+		mCategoryAdapter = new CategoryAdapter(getActivity(), mCategorys);
+		mListView.setAdapter(mCategoryAdapter);
 
 		if(mCategorys.size() <= 0){
 			loadPage(ConfigUtils.MAIN_URL);
@@ -179,51 +168,13 @@ public class ForumListFragment extends Fragment{
 			}
 		}.start();
 	}
-	
-	private class Category{
-		private int mCategoryPages;
-		private String mCategoryUrl;
-		private String mTitle;
 		
-		public Category(){
-			mCategoryPages = 0;
-			mCategoryUrl = null;
-			mTitle = null;
-		}
-		
-		public void setUrl(String url){
-			mCategoryUrl = url;
-		}
-		
-		public void setPageNum(int num){
-			mCategoryPages = num;
-		}
-		
-		public void setTitle(String title){
-			mTitle = title;
-		}
-		
-		public String getUrl(){
-			return mCategoryUrl;
-		}
-		
-		public int getPageNum(){
-			return mCategoryPages;
-		}
-		
-		public String getTitle(){
-			return mTitle;
-		}
-	}
-	
-	private class MyAdapter extends BaseAdapter{
+	private class CategoryAdapter extends BaseAdapter{
 		private ArrayList<Category> mDatas;
-		private Context mContext;
 		private LayoutInflater mInflater;
 		
-		public MyAdapter(Context context, ArrayList<Category> datas){
+		public CategoryAdapter(Context context, ArrayList<Category> datas){
 			mDatas = datas;
-			mContext = context;
 			mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 		}
 		
@@ -248,7 +199,7 @@ public class ForumListFragment extends Fragment{
 			
 			TextView titleV = (TextView)convertView.findViewById(R.id.title);
 			
-			titleV.setText(data.mTitle);		
+			titleV.setText(data.getTitle());		
 			
 			return convertView;
 		}

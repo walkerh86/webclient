@@ -56,6 +56,8 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import com.hcj.webclient.R;
+import com.hcj.webclient.util.DownloadUtils;
+import com.hcj.webclient.util.FileUtils;
 
 
 public class ArticleListFragment extends Fragment{	
@@ -68,7 +70,7 @@ public class ArticleListFragment extends Fragment{
 	private View mFooterView;
 	private ArrayList<ArticleData> mArticleDatas = new ArrayList<ArticleData>();
 	private ArrayList<ArticleData> mArticleAdd = new ArrayList<ArticleData>();
-	private MyAdapter mMyAdapter;
+	private ArticleAdapter mArticleAdapter;
 	private int mLoadedPage;
 	private int mLoadingPage;
 	private ImageCache mImageCache;
@@ -106,7 +108,7 @@ public class ArticleListFragment extends Fragment{
 						mArticleDatas.add(mArticleAdd.get(i));
 					}
 					mArticleAdd.clear();
-					mMyAdapter.notifyDataSetChanged();
+					mArticleAdapter.notifyDataSetChanged();
 					break;
 				case HANDLER_MSG_UPDATE_TITLE:					
 					getActivity().getWindow().setTitle(mCurrCategory.getTitle());
@@ -161,8 +163,8 @@ public class ArticleListFragment extends Fragment{
 	        }  
 		});			
 		
-		mMyAdapter = new MyAdapter(getActivity(),mArticleDatas,mHandler);
-		mListView.setAdapter(mMyAdapter);
+		mArticleAdapter = new ArticleAdapter(getActivity(),mArticleDatas,mHandler);
+		mListView.setAdapter(mArticleAdapter);
 		
 		initCache();
 		initCategory();
@@ -216,9 +218,9 @@ public class ArticleListFragment extends Fragment{
 			Log.i(TAG,"addFooter view");
 			if(mListView.getFooterViewsCount() == 0){
 				mListView.addFooterView(mFooterView);
-				mListView.setAdapter(mMyAdapter);
+				mListView.setAdapter(mArticleAdapter);
 			}
-			mMyAdapter.notifyDataSetChanged();
+			mArticleAdapter.notifyDataSetChanged();
 					
 			loadPage(1);
 		}
@@ -386,7 +388,7 @@ public class ArticleListFragment extends Fragment{
 		}.start();
 	}
 	
-	public class ArticleData{
+	private class ArticleData{
 		public String article_url;
 		public String img_url;
 		public String title;
@@ -394,16 +396,14 @@ public class ArticleListFragment extends Fragment{
 		public String author;
 	}
 	
-	private class MyAdapter extends BaseAdapter{
+	private class ArticleAdapter extends BaseAdapter{
 		private ArrayList<ArticleData> mDatas;
-		private Context mContext;
 		private LayoutInflater mInflater;
 		private Drawable mDefaultIcon;
 		private Handler mHandler;
 		
-		public MyAdapter(Context context, ArrayList<ArticleData> datas, Handler handler){
+		public ArticleAdapter(Context context, ArrayList<ArticleData> datas, Handler handler){
 			mDatas = datas;
-			mContext = context;
 			mHandler = handler;
 			mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 			mDefaultIcon = context.getResources().getDrawable(R.drawable.ic_launcher_jiong);
@@ -429,7 +429,7 @@ public class ArticleListFragment extends Fragment{
 			ArticleData data = mDatas.get(position);
 			
 			TextView titleV = (TextView)convertView.findViewById(R.id.title);
-			TextView summaryV = (TextView)convertView.findViewById(R.id.summary);
+			//TextView summaryV = (TextView)convertView.findViewById(R.id.summary);
 			TextView authorV = (TextView)convertView.findViewById(R.id.author);
 			
 			titleV.setText(data.title);
@@ -457,41 +457,5 @@ public class ArticleListFragment extends Fragment{
 	private void initCategory(){
 		mCurrCategory = new Category();
 		mCurrCategory.setUrl(ConfigUtils.MAIN_URL);
-	}
-	
-	private class Category{
-		private int mCategoryPages;
-		private String mCategoryUrl;
-		private String mTitle;
-		
-		public Category(){
-			mCategoryPages = 0;
-			mCategoryUrl = null;
-			mTitle = null;
-		}
-		
-		public void setUrl(String url){
-			mCategoryUrl = url;
-		}
-		
-		public void setPageNum(int num){
-			mCategoryPages = num;
-		}
-		
-		public void setTitle(String title){
-			mTitle = title;
-		}
-		
-		public String getUrl(){
-			return mCategoryUrl;
-		}
-		
-		public int getPageNum(){
-			return mCategoryPages;
-		}
-		
-		public String getTitle(){
-			return mTitle;
-		}
 	}
 }

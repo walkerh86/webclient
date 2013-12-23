@@ -1,5 +1,7 @@
 package com.hcj.webclient;
 
+import com.hcj.webclient.util.FileUtils;
+
 import android.app.Application;
 import android.util.Log;
 
