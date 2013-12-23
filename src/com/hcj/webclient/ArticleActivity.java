@@ -17,7 +17,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.xml.sax.XMLReader;
 
-import com.hcj.circlelayout.R;
+import com.hcj.webclient.R;
 
 import android.app.Activity;
 import android.content.Context;

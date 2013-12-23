@@ -1,6 +1,7 @@
 package com.hcj.webclient;
 
-import com.hcj.circlelayout.R;
+import com.hcj.webclient.R;
+import com.hcj.webclient.widget.CheckTabWidget;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -17,36 +18,14 @@ import android.widget.TextView;
 
 public class MainTabActivity extends FragmentActivity{
 	private static final String TAG = "MainTabActivity";
-	private TextView mTab1;
-	private TextView mTab2;
-	ArticleListFragment mArticleListFragment;
-	SettingFragment mSettingFragment;
-	private View.OnClickListener mOnClickListner = new View.OnClickListener() {		
-		@Override
-		public void onClick(View v) {
-			int view_id = v.getId();
-			Log.i(TAG,"onClick id="+view_id);
-			FragmentManager fragmentManager = getSupportFragmentManager();  
-			FragmentTransaction fragmentTransaction =fragmentManager.beginTransaction(); 
-			
-			switch(view_id){
-				case R.id.tab1:
-					fragmentTransaction.replace(R.id.fragment_container,mArticleListFragment);  
-					fragmentTransaction.commit();  
-					break;
-				case R.id.tab2:
-					if(mSettingFragment == null){
-						mSettingFragment = new SettingFragment();
-					}
-					fragmentTransaction.replace(R.id.fragment_container,mSettingFragment);  
-					fragmentTransaction.commit();  
-					break;
-				default:
-					break;
-			}
-		}
-	};
-	
+	private static final int TAB_INDEX_MAIN = 0;
+	private static final int TAB_INDEX_FORUM = 1;
+	private static final int TAB_INDEX_SETTING = 2;
+	private ArticleListFragment mArticleListFragment;
+	private ForumListFragment mForumListFragment;
+	private SettingFragment mSettingFragment;
+	CheckTabWidget mCheckTabWidget;
+		
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -61,12 +40,15 @@ public class MainTabActivity extends FragmentActivity{
 		FragmentManager fragmentManager = getSupportFragmentManager();  
 		FragmentTransaction fragmentTransaction =fragmentManager.beginTransaction();  
 		fragmentTransaction.add(R.id.fragment_container,mArticleListFragment);  
-		fragmentTransaction.commit();  
+		fragmentTransaction.commit(); 
 		
-		mTab1 = (TextView)findViewById(R.id.tab1);
-		mTab2 = (TextView)findViewById(R.id.tab2);
-		mTab1.setOnClickListener(mOnClickListner);
-		mTab2.setOnClickListener(mOnClickListner);
+		mCheckTabWidget = (CheckTabWidget)findViewById(R.id.bottom_tab);
+		mCheckTabWidget.setOnTabChangeListener(new CheckTabWidget.OnTabChangeListener() {			
+			@Override
+			public void OnTabChange(int index) {
+				setCurrentTab(index);
+			}
+		});
 	}
 	
 	@Override
@@ -83,4 +65,39 @@ public class MainTabActivity extends FragmentActivity{
 	public boolean onOptionsItemSelected(MenuItem item){
 		return super.onOptionsItemSelected(item);
 	}
+	
+	private void setCurrentTab(int index) {
+		FragmentManager fragmentManager = getSupportFragmentManager();
+		FragmentTransaction fragmentTransaction = fragmentManager
+				.beginTransaction();
+
+		switch (index) {
+			case TAB_INDEX_MAIN:
+				fragmentTransaction.replace(R.id.fragment_container,
+						mArticleListFragment);
+				fragmentTransaction.commit();
+				break;				
+				
+			case TAB_INDEX_FORUM:	
+				if (mForumListFragment == null) {
+					mForumListFragment = new ForumListFragment();
+				}
+				fragmentTransaction.replace(R.id.fragment_container,
+						mForumListFragment);
+				fragmentTransaction.commit();
+				break;
+			
+			case TAB_INDEX_SETTING:
+				if (mSettingFragment == null) {
+					mSettingFragment = new SettingFragment();
+				}
+				fragmentTransaction.replace(R.id.fragment_container,
+						mSettingFragment);
+				fragmentTransaction.commit();
+				break;
+				
+						default:
+				break;
+		}
+	};
 }

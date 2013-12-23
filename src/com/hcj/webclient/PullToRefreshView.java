@@ -1,6 +1,6 @@
 package com.hcj.webclient;
 
-import com.hcj.circlelayout.R;
+import com.hcj.webclient.R;
 
 import android.content.Context;
 import android.os.Handler;
@@ -59,7 +59,7 @@ public class PullToRefreshView extends LinearLayout{
 	
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-		Log.i(TAG,"onMeasure");
+		//Log.i(TAG,"onMeasure");
 		
 		int widthSpecMode = MeasureSpec.getMode(widthMeasureSpec);
         int widthSpecSize =  MeasureSpec.getSize(widthMeasureSpec);
@@ -79,7 +79,7 @@ public class PullToRefreshView extends LinearLayout{
         }
         measureChildWithMargins(mHeaderView,widthMeasureSpec,0,heightMeasureSpec,0);
         mHeaderHeight = mHeaderView.getMeasuredHeight();
-    	Log.i(TAG,"onMeasure, mHeaderHeight="+mHeaderHeight);
+    	//Log.i(TAG,"onMeasure, mHeaderHeight="+mHeaderHeight);
     	
         if(mListView == null){
         	mListView = (ListView)this.findViewById(R.id.list_view);   	

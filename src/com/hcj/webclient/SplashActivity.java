@@ -1,6 +1,6 @@
 package com.hcj.webclient;
 
-import com.hcj.circlelayout.R;
+import com.hcj.webclient.R;
 
 import android.app.Activity;
 import android.content.Intent;

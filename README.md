@@ -10,3 +10,4 @@ my web practice on android
 4、下拉刷新列表功能
 5、Fragment
 6、底部TAB实现
+7、自定义属性

@@ -1,25 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TabWidget xmlns:android="http://schemas.android.com/apk/res/android"
+<com.hcj.webclient.widget.CheckTabWidget xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/bottom_tab"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="56dip"
     android:paddingTop="4dip"
     android:paddingBottom="4dip"
-    android:background="@drawable/bottom_tab_bg">
-    <TextView 
+    android:background="@drawable/bottom_tab_bg"
+    android:orientation="horizontal">
+    <com.hcj.webclient.widget.CheckTextWidget 
         android:id="@+id/tab1"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:gravity="center"
-        android:drawableTop="@drawable/tab_ic_home_selected"
+        android:drawableTop="@drawable/bottom_tab_main_drawable"
+        android:textColor="@drawable/bottom_tab_text_drawable"
         android:text="@string/main_page"/>
-    <TextView 
+    <com.hcj.webclient.widget.CheckTextWidget 
         android:id="@+id/tab2"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:gravity="center"
-        android:drawableTop="@drawable/tab_ic_setting"
+        android:drawableTop="@drawable/bottom_tab_forum_drawable"
+        android:textColor="@drawable/bottom_tab_text_drawable"
+        android:text="@string/forum"/>
+    <com.hcj.webclient.widget.CheckTextWidget 
+        android:id="@+id/tab3"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:drawableTop="@drawable/bottom_tab_setting_drawable"
+        android:textColor="@drawable/bottom_tab_text_drawable"
         android:text="@string/action_settings"/>
-</TabWidget>
+</com.hcj.webclient.widget.CheckTabWidget>

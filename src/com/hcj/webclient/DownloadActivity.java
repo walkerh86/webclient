@@ -51,7 +51,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import com.hcj.circlelayout.R;
+import com.hcj.webclient.R;
 
 public class DownloadActivity extends Activity{	
 	private static final String TAG = "DownloadActivity";

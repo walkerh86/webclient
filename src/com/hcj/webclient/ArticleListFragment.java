@@ -55,7 +55,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import com.hcj.circlelayout.R;
+import com.hcj.webclient.R;
 
 
 public class ArticleListFragment extends Fragment{	
@@ -127,8 +127,6 @@ public class ArticleListFragment extends Fragment{
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		
-		setHasOptionsMenu(true);
 		
 		mLoadedPage = 0;
 		mLoadingPage = -1;

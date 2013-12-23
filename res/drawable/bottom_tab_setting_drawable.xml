@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:webclient="http://schemas.android.com/apk/res/com.hcj.webclient">
+    <item webclient:state_checked="true"
+          android:drawable="@drawable/btn_bottom_setting_click" />
+    <item webclient:state_checked="false"
+          android:drawable="@drawable/btn_bottom_setting_normal" />
+    <item android:drawable="@drawable/btn_bottom_setting_normal" />
+</selector>
