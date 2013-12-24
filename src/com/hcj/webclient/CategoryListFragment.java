@@ -10,7 +10,9 @@ import org.jsoup.select.Elements;
 
 import com.hcj.webclient.util.DownloadUtils;
 import com.hcj.webclient.util.FileUtils;
+import com.hcj.webclient.util.FragmentUtil;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
@@ -25,13 +27,15 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-public class ForumListFragment extends Fragment{
+public class CategoryListFragment extends Fragment{
 	private static final String TAG = "ForumListFragment";
 	private View mFooterView;
 	private ListView mListView;
 	private ArrayList<Category> mCategorys = new ArrayList<Category>(ConfigUtils.DEFAULT_CATEGORY_NUM);	
 	private ArrayList<Category> mCategorysAdd = new ArrayList<Category>(ConfigUtils.DEFAULT_CATEGORY_NUM);	
 	private CategoryAdapter mCategoryAdapter;
+	private OnCategorySelectedListener mOnCategorySelectedListener;
+	private boolean bPaused;
 	
 	private static final int HANDLER_MSG_LOAD_PAGE_DONE = 2;
 	private static final int HANDLER_MSG_UPDATE_LIST = 3;
@@ -72,19 +76,17 @@ public class ForumListFragment extends Fragment{
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		FragmentUtil.updateActivityTitle(this, R.string.forum);
 		
 		mListView = (ListView) getActivity().findViewById(R.id.list_view);
-
-		
 		mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
-				/*
-				 * ArticleData data = mArticleDatas.get(position); Intent intent
-				 * = new Intent(getActivity(), ArticleActivity.class);
-				 * intent.putExtra("url", data.article_url);
-				 * startActivity(intent);
-				 */
+				if(mOnCategorySelectedListener != null){
+					Category category = mCategorys.get(position);
+					mOnCategorySelectedListener.OnCategorySelected(category.getUrl());
+				}
 			}
 		});
 
@@ -97,6 +99,26 @@ public class ForumListFragment extends Fragment{
 			mListView.removeFooterView(mFooterView);
 		}
 	}	
+	
+	@Override
+	public void onAttach(Activity activity){
+		super.onAttach(activity);
+		try{  
+			mOnCategorySelectedListener =(OnCategorySelectedListener)activity;  
+	      }catch(ClassCastException e){  
+	          throw new ClassCastException(activity.toString()+"must implement OnCategorySelectedListener");  
+	      }  
+	}
+	
+	public void onPause(){
+		super.onPause();
+		bPaused = true;
+	}
+	
+	public void onResume(){
+		super.onResume();
+		bPaused = false;
+	}
 	
 	private void loadPage(final String page_url){
 		new Thread(){
@@ -138,6 +160,10 @@ public class ForumListFragment extends Fragment{
 	}
 	
 	private void parsePage(){
+		if(bPaused){
+			return;
+		}
+		
 		final String page_url = ConfigUtils.MAIN_URL;
 		Log.i(TAG,"parseHtml page_url="+page_url);
 		
@@ -203,5 +229,9 @@ public class ForumListFragment extends Fragment{
 			
 			return convertView;
 		}
+	}
+	
+	public interface OnCategorySelectedListener{
+		void OnCategorySelected(String url);
 	}
 }

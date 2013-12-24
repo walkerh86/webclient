@@ -58,6 +58,7 @@ import org.jsoup.select.Elements;
 import com.hcj.webclient.R;
 import com.hcj.webclient.util.DownloadUtils;
 import com.hcj.webclient.util.FileUtils;
+import com.hcj.webclient.util.FragmentUtil;
 
 
 public class ArticleListFragment extends Fragment{	
@@ -74,12 +75,12 @@ public class ArticleListFragment extends Fragment{
 	private int mLoadedPage;
 	private int mLoadingPage;
 	private ImageCache mImageCache;
-	private Category mCurrCategory;
-	private ArrayList<Category> mCategorys = new ArrayList<Category>(ConfigUtils.DEFAULT_CATEGORY_NUM);
-	private boolean bCategoryMenuPrepared;
 	private boolean bPaused;
 	private int mLastMoveY;
 	private boolean bStartOverScroll;
+	private String mCurrentUrl;
+	private int mCurrentPageNum;
+	private String mCurrentTitle;
 	
 	private static final int HANDLER_MSG_LOAD_PAGE_DONE = 2;
 	private static final int HANDLER_MSG_UPDATE_LIST = 3;
@@ -111,7 +112,7 @@ public class ArticleListFragment extends Fragment{
 					mArticleAdapter.notifyDataSetChanged();
 					break;
 				case HANDLER_MSG_UPDATE_TITLE:					
-					getActivity().getWindow().setTitle(mCurrCategory.getTitle());
+					getActivity().getWindow().setTitle(mCurrentTitle);
 					break;		
 				case HANDLER_MSG_LIST_LOADEDALL:
 					Log.i(TAG,"removeFooter view");
@@ -124,21 +125,26 @@ public class ArticleListFragment extends Fragment{
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		
+		mLoadedPage = 0;
+		mLoadingPage = -1;
+		mImageCache = ((BaseApplication)getActivity().getApplication()).getImageCache();
+	}
+	
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+		Log.i(TAG,"onCreateView");
+		return inflater.inflate(R.layout.download_main, container, false);
 	}
 	
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
+		Log.i(TAG,"onActivityCreated");
 		super.onCreate(savedInstanceState);
-		
-		mLoadedPage = 0;
-		mLoadingPage = -1;
-		
-		//setContentView(R.layout.download_main);
 				
 		mFooterView = getActivity().getLayoutInflater().inflate(R.layout.main_list_footer_bar, null);
 			
-		mListView = (ListView)getActivity().findViewById(R.id.list_view);	
-			
+		mListView = (ListView)getActivity().findViewById(R.id.list_view);
 		mListView.addFooterView(mFooterView);
 		mListView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id){
@@ -152,7 +158,7 @@ public class ArticleListFragment extends Fragment{
 		mListView.setOnScrollListener(new AbsListView.OnScrollListener(){
 			@Override  
 	        public void onScrollStateChanged(AbsListView view, int scrollState) {  				
-				if (mLoadingPage < 0 && mLoadedPage < mCurrCategory.getPageNum() && view.getLastVisiblePosition() == view.getCount() - 1) {
+				if (mLoadingPage < 0 && mLoadedPage < mCurrentPageNum && view.getLastVisiblePosition() == view.getCount() - 1) {
 					loadPage(mLoadedPage+1);
 	            }  
 			}
@@ -163,13 +169,14 @@ public class ArticleListFragment extends Fragment{
 	        }  
 		});			
 		
-		mArticleAdapter = new ArticleAdapter(getActivity(),mArticleDatas,mHandler);
+		if(mArticleAdapter == null){
+			mArticleAdapter = new ArticleAdapter(getActivity(),mArticleDatas,mHandler);
+		}
 		mListView.setAdapter(mArticleAdapter);
 		
-		initCache();
-		initCategory();
-		
-		loadPage(1);
+		String url = getArguments().getString("url");
+		Log.i(TAG,"getArguments url="+url);
+		setCategoryUrl(url);
 	}
 	
 	public void onPause(){
@@ -181,55 +188,23 @@ public class ArticleListFragment extends Fragment{
 		super.onResume();
 		bPaused = false;
 	}
-
-	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-			Bundle savedInstanceState) {
-		return inflater.inflate(R.layout.download_main, container, false);
-	}
 	
-	@Override
-	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater){
-		//Log.i(TAG,"fragment onCreateOptionsMenu");
-		super.onCreateOptionsMenu(menu,inflater);
-	}
-	
-	@Override
-	public void onPrepareOptionsMenu(Menu menu){
-		//Log.i(TAG,"fragment onPrepareOptionsMenu");
-		super.onPrepareOptionsMenu(menu);
-		
-		int count = mCategorys.size();
-		if(!bCategoryMenuPrepared && count >0){
-			for(int i=0;i<count;i++){
-				Category category = mCategorys.get(i);
-				menu.add(0,i,0,category.getTitle());
-			}
-			
-			bCategoryMenuPrepared = true;
-		}	
-	}
-	
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item){
-		Category category = mCategorys.get(item.getItemId());
-		if(mCurrCategory != category){
-			mCurrCategory = category;
-			mArticleDatas.clear();
-			Log.i(TAG,"addFooter view");
-			if(mListView.getFooterViewsCount() == 0){
-				mListView.addFooterView(mFooterView);
-				mListView.setAdapter(mArticleAdapter);
-			}
-			mArticleAdapter.notifyDataSetChanged();
-					
-			loadPage(1);
+	public void setCategoryUrl(String url){
+		if(url == null || url.equals(mCurrentUrl)){
+			return;
 		}
-		return true;
+		
+		FragmentUtil.updateActivityTitle(this, R.string.app_name);
+		mArticleDatas.clear();
+		if(mArticleAdapter != null){
+			mArticleAdapter.notifyDataSetChanged();
+		}
+		mCurrentPageNum = 1;
+		mCurrentTitle = null;
+		mCurrentUrl = url;
+		
+		loadPage(1);
 	}
-	
-	private void initCache(){
-		mImageCache = ((BaseApplication)getActivity().getApplication()).getImageCache();
-	}	
 	
 	private void loadPage(int page){	
 		final String page_url = getPageUrl(page);	
@@ -282,9 +257,9 @@ public class ArticleListFragment extends Fragment{
 			return null;
 		}
 		if(page == 1){
-			return mCurrCategory.getUrl();
+			return mCurrentUrl;
 		}
-		return mCurrCategory.getUrl()+"/page/"+page;
+		return mCurrentUrl+"/page/"+page;
 	}
 	
 	private void parsePage(final int page){
@@ -293,7 +268,7 @@ public class ArticleListFragment extends Fragment{
 		}
 		
 		final String page_url = getPageUrl(page);
-		Log.i(TAG,"parseHtml page_url="+page_url);
+		Log.i(TAG,"parseHtml page="+page+", page_url="+page_url);
 		
 		final String result = FileUtils.getTextString(ConfigUtils.APP_CACHE_PATH, page_url);
 		if(result == null){
@@ -305,22 +280,7 @@ public class ArticleListFragment extends Fragment{
 			public void run(){
 				Document doc = Jsoup.parse(result);
 				
-				if(page_url.equals(ConfigUtils.MAIN_URL)){
-					//init category
-					Elements categorys = doc.select("#menu-main-menu > li");
-					Log.i(TAG,"categorys size="+categorys.size());
-					for(Element e : categorys){
-						Category category = new Category();
-						Element a = e.child(0);
-						category.setUrl(a.attr("href"));
-						category.setTitle(a.text());
-						mCategorys.add(category);
-					}
-					
-					mCurrCategory = mCategorys.get(0); //main page
-				}
-				Log.i(TAG,"curr cate url="+mCurrCategory.getUrl());
-				if(page_url.equals(mCurrCategory.getUrl())){
+				if(page_url.equals(mCurrentUrl)){
 					//new category
 					
 					//init page num
@@ -335,7 +295,7 @@ public class ArticleListFragment extends Fragment{
 							int start_idx = pageUrl.lastIndexOf("/")+1;
 							String pageNum = pageUrl.substring(start_idx);			
 							//mTotalPage = Integer.parseInt(pageNum);
-							mCurrCategory.setPageNum(Integer.parseInt(pageNum));
+							mCurrentPageNum = Integer.parseInt(pageNum);
 							Log.i(TAG,"parseHtml,pageNum="+pageNum);
 						}
 					}
@@ -348,7 +308,7 @@ public class ArticleListFragment extends Fragment{
 						Log.i(TAG,"parsePage, title_txt="+title_txt);
 						if(title_txt != null){
 							String[] title_txts = title_txt.split(" ");						
-							mCurrCategory.setTitle(title_txts[0]);	
+							mCurrentTitle = title_txts[0];	
 							mHandler.sendEmptyMessage(HANDLER_MSG_UPDATE_TITLE);
 						}
 					}
@@ -380,7 +340,7 @@ public class ArticleListFragment extends Fragment{
 				mLoadedPage = mLoadingPage;
 				mLoadingPage = -1;
 				
-				if(mLoadedPage >= mCurrCategory.getPageNum()){
+				if(mLoadedPage >= mCurrentPageNum){
 					//mListView.removeFooterView(mFooterView);
 					mHandler.sendEmptyMessage(HANDLER_MSG_LIST_LOADEDALL);
 				}			
@@ -452,10 +412,5 @@ public class ArticleListFragment extends Fragment{
 				mHandler.sendEmptyMessage(HANDLER_MSG_UPDATE_LIST);
 			}
 		};
-	}
-	
-	private void initCategory(){
-		mCurrCategory = new Category();
-		mCurrCategory.setUrl(ConfigUtils.MAIN_URL);
 	}
 }

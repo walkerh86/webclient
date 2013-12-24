@@ -5,6 +5,7 @@ import com.hcj.webclient.widget.CheckTabWidget;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -16,15 +17,17 @@ import android.view.ViewGroup;
 import android.widget.TabWidget;
 import android.widget.TextView;
 
-public class MainTabActivity extends FragmentActivity{
+public class MainTabActivity extends FragmentActivity implements CategoryListFragment.OnCategorySelectedListener{
 	private static final String TAG = "MainTabActivity";
 	private static final int TAB_INDEX_MAIN = 0;
 	private static final int TAB_INDEX_FORUM = 1;
 	private static final int TAB_INDEX_SETTING = 2;
+	private int mCurrentTabIndex;
 	private ArticleListFragment mArticleListFragment;
-	private ForumListFragment mForumListFragment;
+	private CategoryListFragment mForumListFragment;
 	private SettingFragment mSettingFragment;
-	CheckTabWidget mCheckTabWidget;
+	private CheckTabWidget mCheckTabWidget;
+	private String mCategoryUrl;
 		
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -36,67 +39,71 @@ public class MainTabActivity extends FragmentActivity{
 		
 		setContentView(R.layout.main_tab_main);
 		
-		mArticleListFragment = new ArticleListFragment();
-		FragmentManager fragmentManager = getSupportFragmentManager();  
-		FragmentTransaction fragmentTransaction =fragmentManager.beginTransaction();  
-		fragmentTransaction.add(R.id.fragment_container,mArticleListFragment);  
-		fragmentTransaction.commit(); 
+		mCurrentTabIndex = -1;
+		mCategoryUrl = ConfigUtils.MAIN_URL;
 		
 		mCheckTabWidget = (CheckTabWidget)findViewById(R.id.bottom_tab);
 		mCheckTabWidget.setOnTabChangeListener(new CheckTabWidget.OnTabChangeListener() {			
 			@Override
 			public void OnTabChange(int index) {
+				if(mCurrentTabIndex == index){
+					return;
+				}
+				mCurrentTabIndex = index;
+				
 				setCurrentTab(index);
 			}
 		});
+		setCurrentTab(TAB_INDEX_MAIN);
 	}
 	
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu){
-		//Log.i(TAG,"activity onCreateOptionsMenu");
-		return super.onCreateOptionsMenu(menu);
-	}
-	
-	public boolean onPrepareOptionsMenu(Menu menu){
-		//Log.i(TAG,"activity onPrepareOptionsMenu");
-		return super.onPrepareOptionsMenu(menu);
+	public void OnCategorySelected(String url){		
+		mCategoryUrl = url;
+		mCheckTabWidget.setCurrentTab(TAB_INDEX_MAIN);
 	}
 	
 	public boolean onOptionsItemSelected(MenuItem item){
 		return super.onOptionsItemSelected(item);
 	}
 	
-	private void setCurrentTab(int index) {
+	private void replaceFragment(Fragment fragment){
 		FragmentManager fragmentManager = getSupportFragmentManager();
 		FragmentTransaction fragmentTransaction = fragmentManager
 				.beginTransaction();
-
+		fragmentTransaction.replace(R.id.fragment_container,fragment);				
+		fragmentTransaction.commit();
+	}
+	
+	private void setCurrentTab(int index) {
 		switch (index) {
 			case TAB_INDEX_MAIN:
-				fragmentTransaction.replace(R.id.fragment_container,
-						mArticleListFragment);
-				fragmentTransaction.commit();
+				if(mArticleListFragment == null){
+					mArticleListFragment = new ArticleListFragment();
+				}
+				if(mCategoryUrl != null){
+					Bundle bundle = new Bundle();  
+			        bundle.putString("url", mCategoryUrl);  
+			        mArticleListFragment.setArguments(bundle); 
+				}
+				replaceFragment(mArticleListFragment);
 				break;				
 				
 			case TAB_INDEX_FORUM:	
 				if (mForumListFragment == null) {
-					mForumListFragment = new ForumListFragment();
+					mForumListFragment = new CategoryListFragment();
 				}
-				fragmentTransaction.replace(R.id.fragment_container,
-						mForumListFragment);
-				fragmentTransaction.commit();
+				replaceFragment(mForumListFragment);
 				break;
 			
 			case TAB_INDEX_SETTING:
 				if (mSettingFragment == null) {
 					mSettingFragment = new SettingFragment();
 				}
-				fragmentTransaction.replace(R.id.fragment_container,
-						mSettingFragment);
-				fragmentTransaction.commit();
+				replaceFragment(mSettingFragment);
 				break;
 				
-						default:
+			default:
 				break;
 		}
 	};
