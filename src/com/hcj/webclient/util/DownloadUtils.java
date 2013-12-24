@@ -21,11 +21,18 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import com.hcj.webclient.ConfigUtils;
+
 import android.util.Log;
 
 public class DownloadUtils {
 	private static final String TAG = "DownloadUtils";
 	public static final int DATA_BUFFER_SIZE = 8192;
+	
+	public static final int DOWNLOAD_SUCCESS = 0;
+	public static final int DOWNLOAD_FILE_NONEXIST = 1;
+	public static final int DOWNLOAD_TIMEOUT = 2;
+	public static final int DOWNLOAD_UPDATE_PROGRESS = 3;
 	
 	public interface DownloadListener{
 		public void onDownloadProgress(long totalSize, long downloadSize);
@@ -65,7 +72,7 @@ public class DownloadUtils {
 				fos.flush();
 				fos.close();
 				
-				listener.onDownloadDone(0);
+				listener.onDownloadDone(DOWNLOAD_SUCCESS);
 			}
 		} catch (ClientProtocolException e) {
 

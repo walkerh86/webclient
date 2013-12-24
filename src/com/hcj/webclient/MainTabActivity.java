@@ -62,15 +62,10 @@ public class MainTabActivity extends FragmentActivity implements CategoryListFra
 		mCategoryUrl = url;
 		mCheckTabWidget.setCurrentTab(TAB_INDEX_MAIN);
 	}
-	
-	public boolean onOptionsItemSelected(MenuItem item){
-		return super.onOptionsItemSelected(item);
-	}
-	
+		
 	private void replaceFragment(Fragment fragment){
 		FragmentManager fragmentManager = getSupportFragmentManager();
-		FragmentTransaction fragmentTransaction = fragmentManager
-				.beginTransaction();
+		FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();				
 		fragmentTransaction.replace(R.id.fragment_container,fragment);				
 		fragmentTransaction.commit();
 	}

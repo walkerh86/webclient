@@ -75,30 +75,16 @@ public class ArticleActivity extends Activity{
 		mUrl = intent.getStringExtra("url");
 		Log.i(TAG,"url="+mUrl);
 		
-		if(FileUtils.isFileExists(ConfigUtils.APP_CACHE_PATH, mUrl)){
-			mHandler.sendEmptyMessage(0);
-			Log.i(TAG,"get from cache");
-		}else{
-			new Thread(){
-				@Override
-				public void run(){
-					File dest = FileUtils.getFileByUrlWithCreate(ConfigUtils.APP_CACHE_PATH, mUrl);
-					if(dest.exists()){
-						Log.i(TAG,"get from network");
-						DownloadUtils.download(mUrl, dest, new DownloadUtils.DownloadListener() {					
-							@Override
-							public void onDownloadProgress(long totalSize, long downloadSize) {								
-							}
-							
-							@Override
-							public void onDownloadDone(int result) {
-								mHandler.sendEmptyMessage(0);					
-							}
-						});
-					}
-				}
-			}.start();
-		}	
+		DownloadManager.loadPage(mUrl, true, new DownloadUtils.DownloadListener() {								
+			@Override
+			public void onDownloadProgress(long totalSize, long downloadSize) {					
+			}
+
+			@Override
+			public void onDownloadDone(int result) {
+				mHandler.sendEmptyMessage(0);
+			}
+		});		
 	}
 	
 	private void parseHtml(){

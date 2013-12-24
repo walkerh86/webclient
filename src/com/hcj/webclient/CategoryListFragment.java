@@ -120,43 +120,17 @@ public class CategoryListFragment extends Fragment{
 		bPaused = false;
 	}
 	
-	private void loadPage(final String page_url){
-		new Thread(){
+	private void loadPage(final String pageUrl){
+		DownloadManager.loadPage(pageUrl, false, new DownloadUtils.DownloadListener() {								
 			@Override
-			public void run(){
-				Log.i(TAG,"thread run");
-				boolean bUseCache = false;
-				File cacge_file = FileUtils.getFileByUrl(ConfigUtils.APP_CACHE_PATH, page_url);
-				if(cacge_file.exists()){
-					long duration = System.currentTimeMillis() - cacge_file.lastModified();
-					if(duration > 0 && duration < ConfigUtils.CACHE_DURATION){
-						bUseCache = true;
-					}					
-				}
-				
-				if(bUseCache){
-					mHandler.sendEmptyMessage(HANDLER_MSG_LOAD_PAGE_DONE);
-					Log.i(TAG,"get from cache");
-				}else{
-					File dest = FileUtils.getFileByUrlWithCreate(
-							ConfigUtils.APP_CACHE_PATH, page_url);
-					if (dest.exists()) {
-						DownloadUtils.download(page_url, dest,new DownloadUtils.DownloadListener() {								
-									@Override
-									public void onDownloadProgress(
-											long totalSize, long downloadSize) {
-										mHandler.sendEmptyMessage(1);
-									}
-
-									@Override
-									public void onDownloadDone(int result) {
-										mHandler.sendEmptyMessage(HANDLER_MSG_LOAD_PAGE_DONE);
-									}
-						});
-					}
-				}
+			public void onDownloadProgress(long totalSize, long downloadSize) {					
 			}
-		}.start();
+
+			@Override
+			public void onDownloadDone(int result) {
+				mHandler.sendEmptyMessage(HANDLER_MSG_LOAD_PAGE_DONE);
+			}
+		});		
 	}
 	
 	private void parsePage(){
