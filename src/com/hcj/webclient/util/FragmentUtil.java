@@ -10,4 +10,11 @@ public class FragmentUtil {
 			activity.getWindow().setTitle(activity.getResources().getString(resId));
 		}
 	}
+	
+	public static void updateActivityTitle(Fragment fragment,CharSequence text){
+		Activity activity = fragment.getActivity();
+		if(activity != null){
+			activity.getWindow().setTitle(text);
+		}
+	}
 }

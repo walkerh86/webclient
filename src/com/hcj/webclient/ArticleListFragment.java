@@ -1,34 +1,17 @@
 package com.hcj.webclient;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.List;
 
-import android.app.Activity;
-import android.app.ListActivity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.ListFragment;
-import android.support.v4.util.LruCache;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
@@ -36,20 +19,7 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.SeekBar;
 import android.widget.TextView;
-import android.widget.Adapter;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -64,9 +34,6 @@ import com.hcj.webclient.util.FragmentUtil;
 public class ArticleListFragment extends Fragment{	
 	private static final String TAG = "ArticleListFragment";
 	
-	private static final String DOWNLOAD_FILE = "aa.html";
-	private static final String SDPATH = Environment.getExternalStorageDirectory() + "/";
-	private static final String DOWNLOAD_PATH = "zhcjtest/";
 	private ListView mListView;
 	private View mFooterView;
 	private ArrayList<ArticleData> mArticleDatas = new ArrayList<ArticleData>();
@@ -76,8 +43,6 @@ public class ArticleListFragment extends Fragment{
 	private int mLoadingPage;
 	private ImageCache mImageCache;
 	private boolean bPaused;
-	private int mLastMoveY;
-	private boolean bStartOverScroll;
 	private String mCurrentUrl;
 	private int mCurrentPageNum;
 	private String mCurrentTitle;
@@ -112,7 +77,7 @@ public class ArticleListFragment extends Fragment{
 					mArticleAdapter.notifyDataSetChanged();
 					break;
 				case HANDLER_MSG_UPDATE_TITLE:					
-					getActivity().getWindow().setTitle(mCurrentTitle);
+					FragmentUtil.updateActivityTitle(ArticleListFragment.this,mCurrentTitle);
 					break;		
 				case HANDLER_MSG_LIST_LOADEDALL:
 					Log.i(TAG,"removeFooter view");
@@ -124,6 +89,7 @@ public class ArticleListFragment extends Fragment{
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		Log.i(TAG,"onCreate");
 		super.onCreate(savedInstanceState);
 		
 		mLoadedPage = 0;
@@ -133,14 +99,18 @@ public class ArticleListFragment extends Fragment{
 	
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		//Log.i(TAG,"onCreateView");
+		Log.i(TAG,"onCreateView");
 		return inflater.inflate(R.layout.download_main, container, false);
 	}
 	
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
-		//Log.i(TAG,"onActivityCreated");
+		Log.i(TAG,"onActivityCreated");
 		super.onCreate(savedInstanceState);
+		
+		if(mCurrentTitle != null){
+			FragmentUtil.updateActivityTitle(this,mCurrentTitle);
+		}
 				
 		mFooterView = getActivity().getLayoutInflater().inflate(R.layout.main_list_footer_bar, null);
 			
@@ -174,9 +144,12 @@ public class ArticleListFragment extends Fragment{
 		}
 		mListView.setAdapter(mArticleAdapter);
 		
-		String url = getArguments().getString("url");
-		Log.i(TAG,"getArguments url="+url);
-		setCategoryUrl(url);
+		Bundle bundle = getArguments();
+		if(bundle != null){
+			String url = bundle.getString("url");
+			setCategoryUrl(url);
+			Log.i(TAG,"getArguments url="+url);
+		}
 	}
 	
 	public void onPause(){

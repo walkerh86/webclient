@@ -233,16 +233,16 @@ public class PullToRefreshView extends LinearLayout{
 			mRefreshState = state;
 			if(mRefreshState == REFRESH_STATE_PULL_REFRESH){
 				mHeaderTextView.setText(R.string.pull_down_to_refresh);
+				mHeaderImgView.clearAnimation();
 				if(preState == REFRESH_STATE_RELEASE_REFRESH){
-					mHeaderImgView.clearAnimation();
 					mHeaderImgView.startAnimation(mArrowDnAnimator);
 				}else{
 					mHeaderImgView.setImageResource(R.drawable.refresh_list_pull_down);
 				}
 			}else if(mRefreshState == REFRESH_STATE_RELEASE_REFRESH){
 				mHeaderTextView.setText(R.string.release_to_refresh);
+				mHeaderImgView.clearAnimation();
 				if(preState == REFRESH_STATE_PULL_REFRESH){
-					mHeaderImgView.clearAnimation();
 					mHeaderImgView.startAnimation(mArrowUpAnimator);
 				}else{
 					mHeaderImgView.setImageResource(R.drawable.refresh_list_release_up);

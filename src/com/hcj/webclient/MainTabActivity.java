@@ -33,13 +33,9 @@ public class MainTabActivity extends FragmentActivity implements CategoryListFra
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		ViewGroup root_view = (ViewGroup)((ViewGroup)(getWindow().getDecorView())).getChildAt(0);
-		//Log.i(TAG,"root_view="+root_view);
-		getLayoutInflater().inflate(R.layout.bottom_tab, root_view);
-		
 		setContentView(R.layout.main_tab_main);
 		
-		mCurrentTabIndex = -1;
+		mCurrentTabIndex = TAB_INDEX_MAIN;
 		mCategoryUrl = ConfigUtils.MAIN_URL;
 		
 		mCheckTabWidget = (CheckTabWidget)findViewById(R.id.bottom_tab);
@@ -54,7 +50,7 @@ public class MainTabActivity extends FragmentActivity implements CategoryListFra
 				setCurrentTab(index);
 			}
 		});
-		setCurrentTab(TAB_INDEX_MAIN);
+		setCurrentTab(mCurrentTabIndex);
 	}
 	
 	@Override
@@ -80,6 +76,9 @@ public class MainTabActivity extends FragmentActivity implements CategoryListFra
 					Bundle bundle = new Bundle();  
 			        bundle.putString("url", mCategoryUrl);  
 			        mArticleListFragment.setArguments(bundle); 
+			        mCategoryUrl = null;
+				}else{
+					mArticleListFragment.setArguments(null); 
 				}
 				replaceFragment(mArticleListFragment);
 				break;				
