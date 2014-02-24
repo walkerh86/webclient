@@ -36,4 +36,20 @@ public class DownloadManager {
 			listener.onDownloadDone(DownloadUtils.DOWNLOAD_FILE_NONEXIST);
 		}
 	}
+	
+	public static void loadPageWithoutCache(final String pageUrl, final DownloadListener listener){
+		final File dest = FileUtils.getFileByUrlWithCreate(ConfigUtils.APP_CACHE_PATH, pageUrl);				
+		if (dest.exists()) {
+			new Thread(){
+				@Override
+				public void run(){
+					Log.i(TAG,"start download from network");
+					DownloadUtils.download(pageUrl, dest, listener);
+				}
+			}.start();
+		}else{
+			Log.i(TAG,"create file fail");
+			listener.onDownloadDone(DownloadUtils.DOWNLOAD_FILE_NONEXIST);
+		}
+	}
 }

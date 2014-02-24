@@ -13,6 +13,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -33,6 +34,7 @@ public class DownloadUtils {
 	public static final int DOWNLOAD_FILE_NONEXIST = 1;
 	public static final int DOWNLOAD_TIMEOUT = 2;
 	public static final int DOWNLOAD_UPDATE_PROGRESS = 3;
+	public static CookieManager mCookieManager = new CookieManager();
 	
 	public interface DownloadListener{
 		public void onDownloadProgress(long totalSize, long downloadSize);
@@ -44,9 +46,13 @@ public class DownloadUtils {
 		
 		try {
 			HttpGet httpRequest = new HttpGet(url);
-			HttpClient httpClient = new DefaultHttpClient();
+			DefaultHttpClient httpClient = new DefaultHttpClient();
+			Log.i(TAG,"download, url="+url);			
+			mCookieManager.setCookie(httpRequest);
+			
 			HttpResponse httpResponse = httpClient.execute(httpRequest);
 			if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
+				mCookieManager.saveCookie(httpResponse);
 				int totalSize = 0;
 				int downloadSize = 0;
 
@@ -60,7 +66,7 @@ public class DownloadUtils {
 					}
 				}
 				totalSize = (int) httpEntity.getContentLength();
-
+				
 				FileOutputStream fos = new FileOutputStream(dest);
 				byte b[] = new byte[DATA_BUFFER_SIZE];
 				int len = 0;

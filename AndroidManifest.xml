@@ -16,7 +16,7 @@
     <application
         android:name="com.hcj.webclient.BaseApplication"
         android:icon="@drawable/ic_launcher_jiong"
-        android:label="@string/app_name">
+        android:label="@string/app_name">        
         <activity
             android:name="com.hcj.webclient.MainTabActivity"
             android:label="@string/app_name"

@@ -7,6 +7,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
+import java.util.concurrent.BlockingQueue;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -18,6 +19,11 @@ import org.jsoup.select.Elements;
 import org.xml.sax.XMLReader;
 
 import com.hcj.webclient.R;
+import com.hcj.webclient.ImageCache.ImageLoadRequest;
+import com.hcj.webclient.net.ResponseHandler;
+import com.hcj.webclient.net.Response;
+import com.hcj.webclient.net.Request;
+import com.hcj.webclient.net.TStringResponse;
 import com.hcj.webclient.util.DownloadUtils;
 import com.hcj.webclient.util.FileUtils;
 import com.hcj.webclient.util.Html;
@@ -41,20 +47,25 @@ import android.text.Editable;
 //import android.text.Html.*;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
-public class ArticleActivity extends Activity{
+public class ArticleActivity extends Activity implements ResponseHandler{
 	private static final String TAG = "ArticleActivity";
 	private String mUrl;
 	private int mStartIndex;
 	private int mEndIndex;
 	private ImageCache mImageCache;
 	private TextView mArticleTextView;
+	private BlockingQueue<Request> mRequestQueue;
+	
+	private static final int REQUEST_ARTICLE = 0;
+	
 	private Handler mHandler = new Handler(){
 		public void handleMessage(Message msg){
 			switch(msg.what){
-				case 0:
-					parseHtml();
+				case REQUEST_ARTICLE:
+					parseHtml((String)msg.obj);
 					break;
 				default:
 					break;
@@ -66,6 +77,8 @@ public class ArticleActivity extends Activity{
 	protected void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
 		
+		mRequestQueue = ((BaseApplication)getApplication()).getRequestQueue();
+		
 		mImageCache = ((BaseApplication)getApplication()).getImageCache();
 		
 		setContentView(R.layout.article_main);
@@ -74,7 +87,7 @@ public class ArticleActivity extends Activity{
 		Intent intent = getIntent();
 		mUrl = intent.getStringExtra("url");
 		Log.i(TAG,"url="+mUrl);
-		
+		/*
 		DownloadManager.loadPage(mUrl, true, new DownloadUtils.DownloadListener() {								
 			@Override
 			public void onDownloadProgress(long totalSize, long downloadSize) {					
@@ -85,10 +98,27 @@ public class ArticleActivity extends Activity{
 				mHandler.sendEmptyMessage(0);
 			}
 		});		
+		*/
+		requestArticle();
+	}
+	
+	private void requestArticle(){
+		mRequestQueue.add(new Request(mUrl,"GET",null,null,				
+				new TStringResponse(this,REQUEST_ARTICLE,true)));
+	}
+	
+	@Override
+	public void handleResponse(Response<?> response){
+		Message msg = mHandler.obtainMessage(response.mStep, response.mResult);
+		msg.sendToTarget();
 	}
 	
 	private void parseHtml(){
 		String result = FileUtils.getTextString(ConfigUtils.APP_CACHE_PATH, mUrl);
+		parseHtml(result);
+	}
+	
+	private void parseHtml(String result){		
 		if(result == null){
 			Log.i(TAG,"parseHtml result=null");
 			return;
@@ -147,8 +177,8 @@ public class ArticleActivity extends Activity{
 	
 	public class UrlImageData{
 		public TextSpanUrlDrawable mDrawable;
-		public int mWidth;
-		public int mHeight;
+		//public int mWidth;
+		//public int mHeight;
 	}
 	
 	public class UrlImageGetter implements Html.ImageGetter {  
@@ -165,42 +195,41 @@ public class ArticleActivity extends Activity{
 	    }  
 	  
 	    @Override  
-	    public Drawable getDrawable(String url, int width, int height) {	
-	    	String key = FileUtils.replaceUrlWithPlus(url);
-	    	UrlImageData img_data = mUrlImageDatas.get(key);
+	    public Drawable getDrawable(String url, int width, int height) {
+	    	UrlImageData img_data = mUrlImageDatas.get(url);
 	    	if(img_data == null){	    		
 	    		img_data = new UrlImageData();
 	    		img_data.mDrawable = new TextSpanUrlDrawable();
 	    		img_data.mDrawable.setBounds(0, 0, width, height);
 	    		img_data.mDrawable.drawable = mDefaultDrawable;
 	    		img_data.mDrawable.drawable.setBounds(0, 0, width, height);	    		
-	    		img_data.mWidth = width;
-	    		img_data.mHeight = height;
-	    		mUrlImageDatas.put(key,img_data);
+	    		//img_data.mWidth = width;
+	    		//img_data.mHeight = height;
+	    		mUrlImageDatas.put(url,img_data);
 	    		
-	    		mImageCache.getBitmap(url, new OnGetBitmapDone(key,tv_image), false);
+	    		ImageLoadRequest request = mImageCache.new ImageLoadRequest();
+	    		request.mView = tv_image;
+	    		request.mLoadUrl = url;
+	    		request.mIsCacheMem = false;
+	    		request.mWidth = -1;
+	    		request.mHeight = -1;
+	    		request.mListener = mOnGetBitmapListener;
+	    		request.mIsCanceled = false;
+	    		
+	    		mImageCache.getBitmap(request);
 	    	}
 	        
 	        return img_data.mDrawable;  
 	    }  
 	   
-		private class OnGetBitmapDone implements ImageCache.OnGetBitmapListener{
-			String mKey;
-			TextView mTextView;
-			
-			public OnGetBitmapDone(String key, TextView text_view){
-				mKey = key;
-				mTextView = text_view;
-			}
-			
-			public void onGetBitmap(Bitmap b){
-				Log.i(TAG,"onGetBitmap ,key="+mKey);
-				UrlImageData img_data = mUrlImageDatas.get(mKey);
-				BitmapDrawable bitmapDrawable = new BitmapDrawable(c.getResources(),b);
+	    private ImageCache.OnGetBitmapListener mOnGetBitmapListener = new ImageCache.OnGetBitmapListener(){
+			public void onGetBitmap(ImageLoadRequest request){
+				UrlImageData img_data = mUrlImageDatas.get(request.mLoadUrl);
+				BitmapDrawable bitmapDrawable = new BitmapDrawable(c.getResources(),request.mBitmap);
 				img_data.mDrawable.drawable = bitmapDrawable;
-				img_data.mDrawable.drawable.setBounds(0, 0, img_data.mWidth, img_data.mHeight);
-				mTextView.invalidate();
+				img_data.mDrawable.drawable.setBounds(img_data.mDrawable.getBounds());
+				request.mView.invalidate();
 			}
-		}
+		};	   
 	} 
 }

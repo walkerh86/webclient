@@ -1,6 +1,9 @@
 package com.hcj.webclient;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.concurrent.BlockingQueue;
 
 import android.content.Context;
 import android.content.Intent;
@@ -26,12 +29,17 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import com.hcj.webclient.R;
+import com.hcj.webclient.ImageCache.ImageLoadRequest;
+import com.hcj.webclient.net.ResponseHandler;
+import com.hcj.webclient.net.Response;
+import com.hcj.webclient.net.Request;
+import com.hcj.webclient.net.TStringResponse;
 import com.hcj.webclient.util.DownloadUtils;
 import com.hcj.webclient.util.FileUtils;
 import com.hcj.webclient.util.FragmentUtil;
 
 
-public class ArticleListFragment extends Fragment{	
+public class ArticleListFragment extends Fragment implements ResponseHandler{	
 	private static final String TAG = "ArticleListFragment";
 	
 	private ListView mListView;
@@ -47,6 +55,11 @@ public class ArticleListFragment extends Fragment{
 	private int mCurrentPageNum;
 	private String mCurrentTitle;
 	
+	private BlockingQueue<Request> mRequestQueue;
+	
+	private static final int REQUEST_LOAD_PAGE = 0;
+	private static final int REQUEST_IMAGE = 6;
+	
 	private static final int HANDLER_MSG_LOAD_PAGE_DONE = 2;
 	private static final int HANDLER_MSG_UPDATE_LIST = 3;
 	private static final int HANDLER_MSG_UPDATE_TITLE = 4;
@@ -59,8 +72,15 @@ public class ArticleListFragment extends Fragment{
 			}
 			
 			switch (msg.what) {
-				case 0:
-					
+				case REQUEST_LOAD_PAGE:
+					//parsePage(mLoadingPage);
+					parsePage((String)msg.obj);
+					break;
+				case REQUEST_IMAGE:
+					ImageView imgView = (ImageView)((ImageCache.ImageLoadRequest)msg.obj).mView;
+					Bitmap b = ((ImageCache.ImageLoadRequest)msg.obj).mBitmap;
+					Log.i(TAG,"get bitmap,w="+b.getWidth()+",h="+b.getHeight());
+					imgView.setImageBitmap(b);
 					break;
 				case 1:
 					//Log.i(TAG,"progress="+mDownloadProgress);
@@ -91,6 +111,8 @@ public class ArticleListFragment extends Fragment{
 	public void onCreate(Bundle savedInstanceState) {
 		Log.i(TAG,"onCreate");
 		super.onCreate(savedInstanceState);
+		
+		mRequestQueue = ((BaseApplication)getActivity().getApplication()).getRequestQueue();
 		
 		mLoadedPage = 0;
 		mLoadingPage = -1;
@@ -129,8 +151,10 @@ public class ArticleListFragment extends Fragment{
 			@Override  
 	        public void onScrollStateChanged(AbsListView view, int scrollState) {  				
 				if (mLoadingPage < 0 && mLoadedPage < mCurrentPageNum && view.getLastVisiblePosition() == view.getCount() - 1) {
-					loadPage(mLoadedPage+1);
+					//loadPage(mLoadedPage+1);
+					requestLoadArticleList(mLoadedPage+1);
 	            }  
+				mImageCache.setListFling(scrollState == SCROLL_STATE_FLING);
 			}
 			@Override  
 	        public void onScroll(AbsListView view, int firstVisibleItem,  
@@ -176,29 +200,27 @@ public class ArticleListFragment extends Fragment{
 		mCurrentTitle = null;
 		mCurrentUrl = url;
 		
-		loadPage(1);
+		//loadPage(1);
+		requestLoadArticleList(1);
 	}
 	
-	private void loadPage(int page){	
+	private void requestLoadArticleList(int page){
 		final String pageUrl = getPageUrl(page);	
 		Log.i(TAG,"loadPage,page="+page+",page_url="+pageUrl);
 		if(pageUrl == null){
 			return;
 		}
-		
 		mLoadingPage = page;
-		DownloadManager.loadPage(pageUrl, false, new DownloadUtils.DownloadListener() {								
-			@Override
-			public void onDownloadProgress(long totalSize, long downloadSize) {					
-			}
-
-			@Override
-			public void onDownloadDone(int result) {
-				mHandler.sendEmptyMessage(HANDLER_MSG_LOAD_PAGE_DONE);
-			}
-		});
+		mRequestQueue.add(new Request(pageUrl,"GET",null,null,				
+				new TStringResponse(this,REQUEST_LOAD_PAGE,true)));
 	}
-	
+		
+	@Override
+	public void handleResponse(Response<?> response){
+		Message msg = mHandler.obtainMessage(response.mStep, response.mResult);
+		msg.sendToTarget();
+	}
+		
 	private String getPageUrl(int page){
 		if(page < 1){
 			return null;
@@ -209,19 +231,8 @@ public class ArticleListFragment extends Fragment{
 		return mCurrentUrl+"/page/"+page;
 	}
 	
-	private void parsePage(final int page){
-		if(bPaused){
-			return;
-		}
-		
-		final String page_url = getPageUrl(page);
-		Log.i(TAG,"parseHtml page="+page+", page_url="+page_url);
-		
-		final String result = FileUtils.getTextString(ConfigUtils.APP_CACHE_PATH, page_url);
-		if(result == null){
-			Log.i(TAG,"parseHtml result=null");
-			return;
-		}
+	private void parsePage(final String result){
+		final String page_url = getPageUrl(mLoadingPage);
 		
 		new Thread(){
 			public void run(){
@@ -295,6 +306,23 @@ public class ArticleListFragment extends Fragment{
 		}.start();
 	}
 	
+	private void parsePage(final int page){
+		if(bPaused){
+			return;
+		}
+		
+		final String page_url = getPageUrl(page);
+		Log.i(TAG,"parseHtml page="+page+", page_url="+page_url);
+		
+		final String result = FileUtils.getTextString(ConfigUtils.APP_CACHE_PATH, page_url);
+		if(result == null){
+			Log.i(TAG,"parseHtml result=null");
+			return;
+		}
+		
+		parsePage(result);
+	}
+	
 	private class ArticleData{
 		public String article_url;
 		public String img_url;
@@ -307,7 +335,6 @@ public class ArticleListFragment extends Fragment{
 		private ArrayList<ArticleData> mDatas;
 		private LayoutInflater mInflater;
 		private Drawable mDefaultIcon;
-		private Handler mHandler;
 		
 		public ArticleAdapter(Context context, ArrayList<ArticleData> datas, Handler handler){
 			mDatas = datas;
@@ -329,35 +356,48 @@ public class ArticleListFragment extends Fragment{
 		}
 		
 		public View getView(int position, View convertView, ViewGroup parent){
+			ViewHolder viewHolder = null;
+			
 			if (convertView == null) {
 	            convertView = mInflater.inflate(R.layout.main_list_item, parent, false);
+	            viewHolder = new ViewHolder();
+	            //Log.i(TAG,"viewHolder="+viewHolder);
+	            viewHolder.iconView = (ImageView)convertView.findViewById(R.id.icon);
+	            viewHolder.titleView = (TextView)convertView.findViewById(R.id.title);
+	            viewHolder.authorView = (TextView)convertView.findViewById(R.id.author);
+	            convertView.setTag(viewHolder);
+	        }else{
+	        	viewHolder = (ViewHolder)convertView.getTag();
 	        }
 			
 			ArticleData data = mDatas.get(position);
 			
-			TextView titleV = (TextView)convertView.findViewById(R.id.title);
-			//TextView summaryV = (TextView)convertView.findViewById(R.id.summary);
-			TextView authorV = (TextView)convertView.findViewById(R.id.author);
+			viewHolder.titleView.setText(data.title);
+			viewHolder.authorView.setText(data.author);
 			
-			titleV.setText(data.title);
-			//summaryV.setText(data.summary);
-			authorV.setText(data.author);
-			ImageView iconV = (ImageView)convertView.findViewById(R.id.icon);
-			
-			Bitmap b = mImageCache.getBitmap(data.img_url,mOnGetBitmapListener,true);
+			Bitmap b = null;
+			if((data.img_url != null) && (data.img_url.length() > 0)){
+				b = mImageCache.getBitmap(data.img_url,viewHolder.iconView, 75,75,mOnGetBitmapListener,true);						
+			}
 			if(b != null){				
-				iconV.setImageBitmap(b);
+				viewHolder.iconView.setImageBitmap(b);				
 			}else{
-				iconV.setImageDrawable(mDefaultIcon);
+				viewHolder.iconView.setImageDrawable(mDefaultIcon);					
 			}
 			
 			return convertView;
 		}
 		
 		private ImageCache.OnGetBitmapListener mOnGetBitmapListener = new ImageCache.OnGetBitmapListener(){
-			public void onGetBitmap(Bitmap b){
-				mHandler.sendEmptyMessage(HANDLER_MSG_UPDATE_LIST);
+			public void onGetBitmap(ImageLoadRequest cb){
+				((ImageView)cb.mView).setImageBitmap(cb.mBitmap);
 			}
 		};
+	}
+	
+	static class ViewHolder{
+		ImageView iconView;
+		TextView titleView;
+		TextView authorView;
 	}
 }
