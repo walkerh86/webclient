@@ -51,7 +51,7 @@ public class ImageCache implements ResponseHandler{
 				if(!request.mIsCanceled){
 					request.mListener.onGetBitmap(request);
 				}
-				mImageRequests.remove(request.mLoadUrl);
+				mImageRequests.remove(request.mUrl);
 				mRequestCachePool.returnToCache(request);
 				break;
 			default:
@@ -98,7 +98,7 @@ public class ImageCache implements ResponseHandler{
 		ImageLoadRequest oldRequest = (ImageLoadRequest)view.getTag();
 		
 		//this url is processing
-		if(oldRequest != null && oldRequest.mLoadUrl.equals(url)){
+		if(oldRequest != null && oldRequest.mUrl.equals(url)){
 			return null;
 		}
 		
@@ -120,7 +120,7 @@ public class ImageCache implements ResponseHandler{
 		}
 		
 		newRequest.mView = view;
-		newRequest.mLoadUrl = url;
+		newRequest.mUrl = url;
 		newRequest.mIsCacheMem = cache_to_mem;
 		newRequest.mWidth = outWidth;
 		newRequest.mHeight = outHeight;
@@ -144,12 +144,12 @@ public class ImageCache implements ResponseHandler{
 	}
 	
 	public Bitmap getBitmap(ImageLoadRequest request){
-		if(request.mLoadUrl == null || request.mLoadUrl.length() == 0){
+		if(request.mUrl == null || request.mUrl.length() == 0){
 			return null;
 		}
 		
 		Bitmap b = null;
-		b = getBitmapFromMemCache(request.mLoadUrl);
+		b = getBitmapFromMemCache(request.mUrl);
 		if(b != null){
 			//Log.i(TAG,"get from mem cache,url="+url);
 			return b;
@@ -161,17 +161,17 @@ public class ImageCache implements ResponseHandler{
 	}
 	
 	private void getBitmapAsync(ImageLoadRequest request){
-		if(request.mLoadUrl == null || request.mLoadUrl.length() == 0){
+		if(request.mUrl == null || request.mUrl.length() == 0){
 			return;
 		}
-		mImageRequests.put(request.mLoadUrl, request);
+		mImageRequests.put(request.mUrl, request);
 		
-		if(getBitmapFromFileCache(request.mLoadUrl,request,request.mIsCacheMem)){
+		if(getBitmapFromFileCache(request.mUrl,request,request.mIsCacheMem)){
 			return;
 		}
 		
 		if(NetworkUtils.getNetworkState(mContext) == NetworkUtils.NETWORN_NONE){
-			mImageRequests.remove(request.mLoadUrl);
+			mImageRequests.remove(request.mUrl);
 			return;
 		}
 		
@@ -186,7 +186,7 @@ public class ImageCache implements ResponseHandler{
 		}
 		@Override
 		public void run(){
-			Bitmap b = decodeBitmapFromFile(mRequest.mLoadUrl, mRequest.mWidth,mRequest.mHeight);					
+			Bitmap b = decodeBitmapFromFile(mRequest.mUrl, mRequest.mWidth,mRequest.mHeight);					
 			mRequest.onGetBitmap(b);
 		}
 	}
@@ -202,7 +202,7 @@ public class ImageCache implements ResponseHandler{
 	
 	private HashMap<String,ImageLoadRequest> mImageRequests = new HashMap<String,ImageLoadRequest>();
 	private void requestImage(ImageLoadRequest request){
-		mRequestQueue.add(new Request(request.mLoadUrl,"GET",null,null,				
+		mRequestQueue.add(new Request(request.mUrl,"GET",null,null,				
 				new TBitmapResponse(this,0,true,request.mWidth,request.mHeight)));
 	}
 
@@ -233,7 +233,7 @@ public class ImageCache implements ResponseHandler{
 	
 	public class ImageLoadRequest{
 		public View mView;		
-		public String mLoadUrl;
+		public String mUrl;
 		public boolean mIsCacheMem;
 		public int mWidth;
 		public int mHeight;
@@ -244,7 +244,7 @@ public class ImageCache implements ResponseHandler{
 				
 		public void onGetBitmap(Bitmap b){
 			if(mIsCacheMem && b != null){
-				addBitmapToMemoryCache(mLoadUrl, b);
+				addBitmapToMemoryCache(mUrl, b);
 			}
 			
 			if(b != null && !mIsCanceled){

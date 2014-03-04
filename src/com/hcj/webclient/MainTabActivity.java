@@ -2,6 +2,7 @@ package com.hcj.webclient;
 
 import com.hcj.webclient.R;
 import com.hcj.webclient.widget.CheckTabWidget;
+import com.hcj.webclient.widget.TitleWidget;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -27,6 +28,7 @@ public class MainTabActivity extends FragmentActivity implements CategoryListFra
 	private CategoryListFragment mForumListFragment;
 	private SettingFragment mSettingFragment;
 	private CheckTabWidget mCheckTabWidget;
+	private TitleWidget mTitleWidget;
 	private String mCategoryUrl;
 		
 	@Override
@@ -51,6 +53,14 @@ public class MainTabActivity extends FragmentActivity implements CategoryListFra
 			}
 		});
 		setCurrentTab(mCurrentTabIndex);
+		
+		mTitleWidget = (TitleWidget)findViewById(R.id.title_widget);
+		mTitleWidget.setLeft(R.drawable.title_more, new View.OnClickListener() {			
+			@Override
+			public void onClick(View v) {
+				//getActivity().finish();	
+			}
+		});
 	}
 	
 	@Override

@@ -20,4 +20,7 @@
 	<string name="captcha">验证码</string>
 	<string name="register_hint">密码将通过电子邮件发送给您。</string>
 
+	<string name="num_floor">%d楼</string>
+	<string name="floor_main">楼主</string>
+	<string name="reply">回复</string>
 </resources>

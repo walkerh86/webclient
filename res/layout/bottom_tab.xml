@@ -5,7 +5,7 @@
     android:layout_height="56dip"
     android:paddingTop="4dip"
     android:paddingBottom="4dip"
-    android:background="@drawable/bottom_tab_bg"
+    android:background="#ff303030"
     android:orientation="horizontal">
     <com.hcj.webclient.widget.CheckTextWidget 
         android:id="@+id/tab1"
